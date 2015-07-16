@@ -6,4 +6,4 @@ setup(name='mdx_bib',
       author = 'Darwin Darakananda',
       py_modules=['mdx_bib'],
       install_requires = ['markdown', 'pybtex'],
-      license='BSD')
+      license='MIT')
