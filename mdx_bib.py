@@ -103,6 +103,7 @@ class CitationsPreprocessor(Preprocessor):
     """Gather reference definitions and citation keys"""
 
     def __init__(self, bibliography):
+        super().__init__()
         self.bib = bibliography
 
     def subsequentIndents(self, lines, i):
@@ -168,6 +169,7 @@ class CitationsTreeprocessor(Treeprocessor):
     """Add a bibliography/reference section to the end of the document"""
 
     def __init__(self, bibliography):
+        super().__init__()
         self.bib = bibliography
 
     def run(self, root):
@@ -188,7 +190,7 @@ class CitationsExtension(Extension):
             self.getConfig("order"),
         )
 
-    def extendMarkdown(self, md, md_globals):
+    def extendMarkdown(self, md):
         md.registerExtension(self)
         self.parser = md.parser
         self.md = md
