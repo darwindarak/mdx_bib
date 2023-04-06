@@ -195,11 +195,11 @@ class CitationsExtension(Extension):
         self.parser = md.parser
         self.md = md
 
-        md.preprocessors.add("mdx_bib", CitationsPreprocessor(self.bib), "<reference")
-        md.inlinePatterns.add(
-            "mdx_bib", CitationsPattern(CITATION_RE, self.bib), "<reference"
+        md.preprocessors.register(CitationsPreprocessor(self.bib), "mdx_bib", 10)
+        md.inlinePatterns.register(
+            CitationsPattern(CITATION_RE, self.bib), "mdx_bib", 20
         )
-        md.treeprocessors.add("mdx_bib", CitationsTreeprocessor(self.bib), "_begin")
+        md.treeprocessors.register(CitationsTreeprocessor(self.bib), "mdx_bib", 30)
 
 
 def makeExtension(*args, **kwargs):
