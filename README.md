@@ -49,3 +49,8 @@ If a matching reference definition cannot be found, then the extension looks in 
 
 [R Markdown]: http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
 
+## Changelog
+
+### 2023-04-05
+
+- replace from `markdown.util import etree` with `import xml.etree.ElementTree as etree` per this [Python-Markdown 3.2 changelog](https://github.com/Python-Markdown/markdown/blob/master/docs/change_log/release-3.2.md)

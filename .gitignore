@@ -1,0 +1,5 @@
+.idea/
+__pycache__/
+build/
+dist/
+mdx_bib.egg-info/

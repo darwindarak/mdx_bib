@@ -1,29 +1,28 @@
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 from markdown.treeprocessors import Treeprocessor
-from markdown.postprocessors import Postprocessor
 from markdown.inlinepatterns import Pattern
-from markdown.util import etree
-
+import xml.etree.ElementTree as etree
 from pybtex.database.input import bibtex
 
 from collections import OrderedDict
 import re
 
-BRACKET_RE = re.compile(r'\[([^\[]+)\]')
-CITE_RE    = re.compile(r'@(\w+)')
-DEF_RE     = re.compile(r'\A {0,3}\[@(\w+)\]:\s*(.*)')
-INDENT_RE  = re.compile(r'\A\t| {4}(.*)')
+BRACKET_RE = re.compile(r"\[([^\[]+)\]")
+CITE_RE = re.compile(r"@(\w+)")
+DEF_RE = re.compile(r"\A {0,3}\[@(\w+)\]:\s*(.*)")
+INDENT_RE = re.compile(r"\A\t| {4}(.*)")
 
-CITATION_RE = r'@(\w+)'          
+CITATION_RE = r"@(\w+)"
+
 
 class Bibliography(object):
-    """ Keep track of document references and citations for exporting """ 
+    """Keep track of document references and citations for exporting"""
 
     def __init__(self, extension, bibtex_file, order):
         self.extension = extension
         self.order = order
-        
+
         self.citations = OrderedDict()
         self.references = dict()
 
@@ -31,8 +30,8 @@ class Bibliography(object):
             try:
                 parser = bibtex.Parser()
                 self.bibsource = parser.parse_file(bibtex_file).entries
-            except:
-                print("Error loading bibtex file")
+            except Exception as e:
+                print(f"Error loading bibtex file - {e}")
                 self.bibsource = dict()
         else:
             self.bibsource = dict()
@@ -50,9 +49,9 @@ class Bibliography(object):
         return "ref-" + citekey
 
     def formatAuthor(self, author):
-        out = "%s %s."%(author.last()[0], author.first()[0][0])
+        out = "%s %s." % (author.last()[0], author.first()[0][0])
         if author.middle():
-            out += "%s."%(author.middle()[0][0])
+            out += "%s." % (author.middle()[0][0])
         return out
 
     def formatReference(self, ref):
@@ -62,19 +61,19 @@ class Bibliography(object):
         volume = ref.fields.get("volume", "")
         year = ref.fields.get("year")
 
-        reference = "<p>%s: <i>%s</i>."%(authors, title)
+        reference = "<p>%s: <i>%s</i>." % (authors, title)
         if journal:
-            reference += " %s."%journal
+            reference += " %s." % journal
             if volume:
-                reference += " <b>%s</b>,"%volume
-            
-        reference += " (%s)</p>"%year
+                reference += " <b>%s</b>," % volume
+
+        reference += " (%s)</p>" % year
 
         return reference
 
     def makeBibliography(self, root):
-        if self.order == 'alphabetical':
-            raise(NotImplementedError)
+        if self.order == "alphabetical":
+            raise (NotImplementedError)
 
         div = etree.Element("div")
         div.set("class", "references")
@@ -99,14 +98,16 @@ class Bibliography(object):
 
         return div
 
+
 class CitationsPreprocessor(Preprocessor):
-    """ Gather reference definitions and citation keys """
-    
+    """Gather reference definitions and citation keys"""
+
     def __init__(self, bibliography):
+        super().__init__()
         self.bib = bibliography
 
     def subsequentIndents(self, lines, i):
-        """ Concatenate consecutive indented lines """
+        """Concatenate consecutive indented lines"""
         linesOut = []
         while i < len(lines):
             m = INDENT_RE.match(lines[i])
@@ -127,8 +128,8 @@ class CitationsPreprocessor(Preprocessor):
             if m:
                 key = m.group(1)
                 reference = m.group(2)
-                indents, i = self.subsequentIndents(lines, i+1)
-                reference += ' ' + indents
+                indents, i = self.subsequentIndents(lines, i + 1)
+                reference += " " + indents
 
                 self.bib.setReference(key, reference)
                 continue
@@ -141,9 +142,10 @@ class CitationsPreprocessor(Preprocessor):
             i += 1
 
         return linesOut
-    
+
+
 class CitationsPattern(Pattern):
-    """ Handles converting citations keys into links """
+    """Handles converting citations keys into links"""
 
     def __init__(self, pattern, bibliography):
         super(CitationsPattern, self).__init__(pattern)
@@ -153,51 +155,52 @@ class CitationsPattern(Pattern):
         id = m.group(2)
         if id in self.bib.citations:
             a = etree.Element("a")
-            a.set('id', self.bib.citationID(id))
-            a.set('href', '#' + self.bib.referenceID(id))
-            a.set('class', 'citation')
+            a.set("id", self.bib.citationID(id))
+            a.set("href", "#" + self.bib.referenceID(id))
+            a.set("class", "citation")
             a.text = id
 
             return a
         else:
-           return None 
-    
+            return None
+
+
 class CitationsTreeprocessor(Treeprocessor):
-    """ Add a bibliography/reference section to the end of the document """
+    """Add a bibliography/reference section to the end of the document"""
 
     def __init__(self, bibliography):
+        super().__init__()
         self.bib = bibliography
-        
+
     def run(self, root):
         citations = self.bib.makeBibliography(root)
         root.append(citations)
-    
+
+
 class CitationsExtension(Extension):
-
     def __init__(self, *args, **kwargs):
-
         self.config = {
-            "bibtex_file": ["",
-                            "Bibtex file path"],
-            'order': [
-                "unsorted",
-                "Order of the references (unsorted, alphabetical)"]
+            "bibtex_file": ["", "Bibtex file path"],
+            "order": ["unsorted", "Order of the references (unsorted, alphabetical)"],
         }
         super(CitationsExtension, self).__init__(*args, **kwargs)
         self.bib = Bibliography(
             self,
-            self.getConfig('bibtex_file'),
-            self.getConfig('order'),
+            self.getConfig("bibtex_file"),
+            self.getConfig("order"),
         )
-                        
-    def extendMarkdown(self, md, md_globals):
+
+    def extendMarkdown(self, md):
         md.registerExtension(self)
         self.parser = md.parser
         self.md = md
 
-        md.preprocessors.add("mdx_bib",  CitationsPreprocessor(self.bib), "<reference")
-        md.inlinePatterns.add("mdx_bib", CitationsPattern(CITATION_RE, self.bib), "<reference")
-        md.treeprocessors.add("mdx_bib", CitationsTreeprocessor(self.bib), "_begin")
+        md.preprocessors.register(CitationsPreprocessor(self.bib), "mdx_bib", 10)
+        md.inlinePatterns.register(
+            CitationsPattern(CITATION_RE, self.bib), "mdx_bib", 20
+        )
+        md.treeprocessors.register(CitationsTreeprocessor(self.bib), "mdx_bib", 30)
+
 
 def makeExtension(*args, **kwargs):
     return CitationsExtension(*args, **kwargs)
