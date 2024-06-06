@@ -17,9 +17,9 @@ will install a module named `mdx_bib`.
 
 ```python
 import markdown
-from mdx_bib import CitationExtension
+from mdx_bib import CitationsExtension
 
-cite = CitationExtension(bibtex_file='library.bib', order='unsorted')
+cite = CitationsExtension(bibtex_file='library.bib', order='unsorted')
 html = markdown.markdown(text, extensions=[cite])
 ```
 
